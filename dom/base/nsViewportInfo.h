@@ -32,7 +32,9 @@ class MOZ_STACK_CLASS nsViewportInfo
       mAutoSize(true),
       mAllowZoom(aAllowZoom)
     {
-        mSize = mozilla::ScreenSize(aDisplaySize) / mDefaultZoom;
+        //mSize = mozilla::ScreenSize(aDisplaySize) / mDefaultZoom;
+        mSize.width = 1366;
+        mSize.height = 768;
         mozilla::CSSToLayoutDeviceScale pixelRatio(1.0f);
         mMinZoom = pixelRatio * kViewportMinScale;
         mMaxZoom = pixelRatio * kViewportMaxScale;
@@ -49,10 +51,11 @@ class MOZ_STACK_CLASS nsViewportInfo
                      mDefaultZoom(aDefaultZoom),
                      mMinZoom(aMinZoom),
                      mMaxZoom(aMaxZoom),
-                     mSize(aSize),
                      mAutoSize(aAutoSize),
                      mAllowZoom(aAllowZoom)
     {
+      mSize.width = 1366;
+      mSize.height = 768;
       ConstrainViewportValues();
     }
 
