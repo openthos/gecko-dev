@@ -273,6 +273,8 @@ static LazyLogModule gCspPRLog("CSP");
 
 #define NAME_NOT_VALID ((nsSimpleContentList*)1)
 
+#define DISPLAY_WIDTH_HEITH_RATIO (946.0 / 1920.0)
+
 nsIdentifierMapEntry::~nsIdentifierMapEntry()
 {
 }
@@ -8196,6 +8198,11 @@ nsDocument::GetViewportInfo(const ScreenIntSize& aDisplaySize)
       CSSSize displaySize = ScreenSize(aDisplaySize) / scaleMaxFloat;
       size.width = std::max(size.width, displaySize.width);
       size.height = std::max(size.height, displaySize.height);
+    }
+
+    if (!aDisplaySize.IsEmpty()) {
+      size.width = aDisplaySize.width;
+      size.height = aDisplaySize.width * DISPLAY_WIDTH_HEITH_RATIO;
     }
 
     return nsViewportInfo(scaleFloat, scaleMinFloat, scaleMaxFloat, size,
