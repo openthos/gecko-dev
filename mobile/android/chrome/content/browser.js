@@ -3198,6 +3198,8 @@ var DesktopUserAgent = {
     let channelWindow = this._getWindowForRequest(channel);
     let tab = BrowserApp.getTabForWindow(channelWindow);
     if (tab) {
+      tab.host = channel.URI.host;
+      tab.path = channel.URI.path;
       return this.getUserAgentForTab(tab);
     }
 
@@ -3214,12 +3216,11 @@ var DesktopUserAgent = {
   },
 
   getUserAgentForTab: function ua_getUserAgentForTab(aTab) {
-    // Send desktop UA if "Request Desktop Site" is enabled.
-    if (aTab.desktopMode) {
-      return this.DESKTOP_UA;
+    if (((aTab.host == "www.iqiyi.com") || (aTab.host == "m.iqiyi.com"))
+        && (aTab.path != "/")) {
+      return null;
     }
-
-    return null;
+    return this.DESKTOP_UA;
   },
 
   _getRequestLoadContext: function ua_getRequestLoadContext(aRequest) {
@@ -3477,6 +3478,8 @@ Tab.prototype = {
     let title = aParams.title || aURL;
     try {
       uri = Services.io.newURI(aURL, null, null).spec;
+      this.host = uri.host;
+      this.path = uri.path;
     } catch (e) {}
 
     // When the tab is stubbed from Java, there's a window between the stub
