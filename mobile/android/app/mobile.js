@@ -751,7 +751,7 @@ pref("layers.tiles.fade-in.duration-ms", 250);
 #endif
 
 // Enable the dynamic toolbar
-pref("browser.chrome.dynamictoolbar", true);
+pref("browser.chrome.dynamictoolbar", false);
 
 // Hide common parts of URLs like "www." or "http://"
 pref("browser.urlbar.trimURLs", true);
