@@ -3216,10 +3216,15 @@ var DesktopUserAgent = {
   },
 
   getUserAgentForTab: function ua_getUserAgentForTab(aTab) {
-    if (((aTab.host == "www.iqiyi.com") || (aTab.host == "m.iqiyi.com"))
+    if (((aTab.host == "www.iqiyi.com") || (aTab.host == "m.iqiyi.com")
+        || (aTab.host == "www.youku.com") || (aTab.host == "m.youku.com")
+        || (aTab.host == "v.youku.com")
+        || (aTab.host == "tv.sohu.com") || (aTab.host == "m.tv.sohu.com"))
         && (aTab.path != "/")) {
+      aTab.desktopMode = false;
       return null;
     }
+    aTab.desktopMode = true;
     return this.DESKTOP_UA;
   },
 
