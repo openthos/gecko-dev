@@ -246,6 +246,8 @@ public class BrowserApp extends GeckoApp
     private static final int ADDON_MENU_OFFSET = 1000;
     public static final String TAB_HISTORY_FRAGMENT_TAG = "tabHistoryFragment";
 
+    private static final String HOME_PAGE_URL= "https://github.com/openthos/openthos/wiki";
+
     private static class MenuItemInfo {
         public int id;
         public String label;
@@ -2632,6 +2634,13 @@ public class BrowserApp extends GeckoApp
     }
 
     private void showFirstrunPager() {
+
+        SharedPreferences homePreferences = GeckoSharedPrefs.forProfile(this);
+        homePreferences.edit()
+               .putString(GeckoPreferences.PREFS_HOMEPAGE, HOME_PAGE_URL)
+               .putString(GeckoPreferences.PREFS_HOMEPAGE_PARTNER_COPY, HOME_PAGE_URL)
+               .apply();
+
         if (Experiments.isInExperimentLocal(getContext(), Experiments.ONBOARDING3_A)) {
             Telemetry.startUISession(TelemetryContract.Session.EXPERIMENT, Experiments.ONBOARDING3_A);
             GeckoSharedPrefs.forProfile(getContext()).edit().putString(Experiments.PREF_ONBOARDING_VERSION, Experiments.ONBOARDING3_A).apply();
