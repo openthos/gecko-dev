@@ -571,6 +571,19 @@ public:
     SCROLLDELTA_PIXEL
   };
 
+  enum ScrollStatusType
+  {
+    SCROLLSTATUS_NULL,
+    SCROLLSTATUS_H_BEGIN,
+    SCROLLSTATUS_H_CONTINUE,
+    SCROLLSTATUS_H_END,
+    SCROLLSTATUS_H_CANCEL,
+    SCROLLSTATUS_V_BEGIN,
+    SCROLLSTATUS_V_CONTINUE,
+    SCROLLSTATUS_V_END,
+    SCROLLSTATUS_V_CANCEL
+  };
+
   static ScrollDeltaType
   DeltaTypeForDeltaMode(uint32_t aDeltaMode)
   {
@@ -617,7 +630,8 @@ public:
                    const ScreenPoint& aOrigin,
                    double aDeltaX,
                    double aDeltaY,
-                   bool aAllowToOverrideSystemScrollSpeed)
+                   bool aAllowToOverrideSystemScrollSpeed,
+                   ScrollStatusType aScrollStatus = SCROLLSTATUS_NULL)
     : InputData(SCROLLWHEEL_INPUT, aTime, aTimeStamp, aModifiers)
     , mDeltaType(aDeltaType)
     , mScrollMode(aScrollMode)
@@ -633,6 +647,7 @@ public:
     , mMayHaveMomentum(false)
     , mIsMomentum(false)
     , mAllowToOverrideSystemScrollSpeed(aAllowToOverrideSystemScrollSpeed)
+    , mScrollStatus(aScrollStatus)
   {}
 
   explicit ScrollWheelInput(const WidgetWheelEvent& aEvent);
@@ -678,6 +693,8 @@ public:
   bool mMayHaveMomentum;
   bool mIsMomentum;
   bool mAllowToOverrideSystemScrollSpeed;
+
+  ScrollStatusType mScrollStatus;
 };
 
 } // namespace mozilla

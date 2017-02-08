@@ -510,11 +510,6 @@ public:
             return false;
         }
 
-        RefPtr<APZCTreeManager> controller = mWindow->mAPZC;
-        if (!controller) {
-            return false;
-        }
-
         ScreenPoint origin = ScreenPoint(aX, aY);
 
         ScrollWheelInput input(aTime, TimeStamp::Now(), GetModifiers(aMetaState),
@@ -523,6 +518,15 @@ public:
                                origin,
                                aHScroll, aVScroll,
                                false);
+        return HandleScrollEventCore(input);
+    }
+
+    bool HandleScrollEventCore(ScrollWheelInput input)
+    {
+        RefPtr<APZCTreeManager> controller = mWindow->mAPZC;
+        if (!controller) {
+            return false;
+        }
 
         ScrollableLayerGuid guid;
         uint64_t blockId;
@@ -599,15 +603,83 @@ public:
         return result;
     }
 
+    bool HandleScrollBarTouchEventV(int32_t aAction, int64_t aTime, float y) {
+        ScrollWheelInput::ScrollStatusType status;
+
+        switch (aAction) {
+            case AndroidMotionEvent::ACTION_UP:
+                status = ScrollWheelInput::SCROLLSTATUS_V_END;
+                break;
+            case AndroidMotionEvent::ACTION_MOVE:
+                status = ScrollWheelInput::SCROLLSTATUS_V_CONTINUE;
+                break;
+            case AndroidMotionEvent::ACTION_DOWN:
+                return true;
+            default:
+                return false;
+        }
+
+        ScreenPoint origin = ScreenPoint(0.0f, y);
+
+        ScrollWheelInput input(aTime, TimeStamp::Now(), 0,
+                               ScrollWheelInput::SCROLLMODE_SMOOTH,
+                               ScrollWheelInput::SCROLLDELTA_PIXEL,
+                               origin,
+                               0.0f, 0.0f,
+                               false,
+                               status);
+        return HandleScrollEventCore(input);
+    }
+
+    bool HandleScrollBarTouchEventH(int32_t aAction, int64_t aTime, float x) {
+        ScrollWheelInput::ScrollStatusType status;
+
+        switch (aAction) {
+            case AndroidMotionEvent::ACTION_UP:
+                status = ScrollWheelInput::SCROLLSTATUS_H_END;
+                break;
+            case AndroidMotionEvent::ACTION_MOVE:
+                status = ScrollWheelInput::SCROLLSTATUS_H_CONTINUE;
+                break;
+            case AndroidMotionEvent::ACTION_DOWN:
+                return true;
+            default:
+                return false;
+        }
+
+        ScreenPoint origin = ScreenPoint(x, 0.0f);
+
+        ScrollWheelInput input(aTime, TimeStamp::Now(), 0,
+                               ScrollWheelInput::SCROLLMODE_SMOOTH,
+                               ScrollWheelInput::SCROLLDELTA_PIXEL,
+                               origin,
+                               0.0f, 0.0f,
+                               false,
+                               status);
+        return HandleScrollEventCore(input);
+    }
+
     bool HandleMouseEvent(int32_t aAction, int64_t aTime, int32_t aMetaState,
                           float aX, float aY, int buttons)
     {
+    #define SCROLL_BAR_THICK 15
+
         MOZ_ASSERT(AndroidBridge::IsJavaUiThread());
 
         MutexAutoLock lock(mWindowLock);
         if (!mWindow) {
             // We already shut down.
             return false;
+        }
+
+        if ((((int)aX + SCROLL_BAR_THICK) > mWindow->mBounds.width)
+            && HandleScrollBarTouchEventV(aAction, aTime, aY)) {
+            return true;
+        }
+
+        if ((((int)aY + SCROLL_BAR_THICK) > mWindow->mBounds.height)
+            && HandleScrollBarTouchEventH(aAction, aTime, aX)) {
+            return true;
         }
 
         RefPtr<APZCTreeManager> controller = mWindow->mAPZC;

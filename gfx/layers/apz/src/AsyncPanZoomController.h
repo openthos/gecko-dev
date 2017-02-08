@@ -692,6 +692,9 @@ private:
   AxisX mX;
   AxisY mY;
 
+  bool mDragFlagH;
+  bool mDragFlagV;
+
   // This flag is set to true when we are in a axis-locked pan as a result of
   // the touch-action CSS property.
   bool mPanDirRestricted;

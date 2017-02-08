@@ -5668,6 +5668,7 @@ ScrollFrameHelper::GetActualScrollbarSizes() const
 void
 ScrollFrameHelper::SetScrollbarVisibility(nsIFrame* aScrollbar, bool aVisible)
 {
+  aVisible = true;
   nsScrollbarFrame* scrollbar = do_QueryFrame(aScrollbar);
   if (scrollbar) {
     // See if we have a mediator.

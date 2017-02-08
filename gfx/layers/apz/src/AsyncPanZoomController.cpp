@@ -698,6 +698,8 @@ AsyncPanZoomController::AsyncPanZoomController(uint64_t aLayersId,
      mLastContentPaintMetrics(mLastContentPaintMetadata.GetMetrics()),
      mX(this),
      mY(this),
+     mDragFlagH(false),
+     mDragFlagV(false),
      mPanDirRestricted(false),
      mZoomConstraints(false, false,
         mFrameMetrics.GetDevPixelsPerCSSPixel() * kViewportMinScale / ParentLayerToScreenScale(1),
@@ -1503,6 +1505,7 @@ AsyncPanZoomController::GetScrollWheelDelta(const ScrollWheelInput& aEvent) cons
   ParentLayerSize scrollAmount;
   ParentLayerSize pageScrollSize;
   bool isRootContent = false;
+  float cur, range, page, ratio, length;
 
   {
     // Grab the lock to access the frame metrics.
@@ -1517,23 +1520,67 @@ AsyncPanZoomController::GetScrollWheelDelta(const ScrollWheelInput& aEvent) cons
   }
 
   ParentLayerPoint delta;
-  switch (aEvent.mDeltaType) {
-    case ScrollWheelInput::SCROLLDELTA_LINE: {
-      delta.x = aEvent.mDeltaX * scrollAmount.width;
-      delta.y = aEvent.mDeltaY * scrollAmount.height;
+
+  delta.x = 0.0f;
+  delta.y = 0.0f;
+  switch (aEvent.mScrollStatus) {
+    case ScrollWheelInput::SCROLLSTATUS_H_CONTINUE:
+    case ScrollWheelInput::SCROLLSTATUS_H_END:
+      range = mX.GetPageLength().value;
+      page = mX.GetCompositionLength().value;
+      ratio = page / range;
+      cur = mX.GetOrigin().value * ratio;
+      length = page * ratio / 2;
+      if (aEvent.mScrollStatus == ScrollWheelInput::SCROLLSTATUS_H_CONTINUE) {
+        delta.x = aEvent.mOrigin.x - cur - length;
+      } else if (!mDragFlagH) {
+        if (aEvent.mOrigin.x > cur + length) {
+          delta.x = page;
+        } else {
+          delta.x = -1 * page;
+        }
+      }
       break;
-    }
-    case ScrollWheelInput::SCROLLDELTA_PAGE: {
-      delta.x = aEvent.mDeltaX * pageScrollSize.width;
-      delta.y = aEvent.mDeltaY * pageScrollSize.height;
+    case ScrollWheelInput::SCROLLSTATUS_V_CONTINUE:
+    case ScrollWheelInput::SCROLLSTATUS_V_END:
+      range = mY.GetPageLength().value;
+      page = mY.GetCompositionLength().value;
+      ratio = page / range;
+      cur = mY.GetOrigin().value * ratio;
+      length = page * ratio / 2;
+      if (aEvent.mScrollStatus == ScrollWheelInput::SCROLLSTATUS_V_CONTINUE) {
+        delta.y = aEvent.mOrigin.y - cur - length;
+      } else if (!mDragFlagV) {
+        if (aEvent.mOrigin.y > cur + length) {
+          delta.y = page;
+        } else {
+          delta.y = -1 * page;
+        }
+      }
       break;
-    }
-    case ScrollWheelInput::SCROLLDELTA_PIXEL: {
-      delta = ToParentLayerCoordinates(ScreenPoint(aEvent.mDeltaX, aEvent.mDeltaY), aEvent.mOrigin);
+    case ScrollWheelInput::SCROLLSTATUS_H_BEGIN:
+    case ScrollWheelInput::SCROLLSTATUS_V_BEGIN:
       break;
-    }
     default:
-      MOZ_ASSERT_UNREACHABLE("unexpected scroll delta type");
+      switch (aEvent.mDeltaType) {
+        case ScrollWheelInput::SCROLLDELTA_LINE: {
+          delta.x = aEvent.mDeltaX * scrollAmount.width;
+          delta.y = aEvent.mDeltaY * scrollAmount.height;
+          break;
+        }
+        case ScrollWheelInput::SCROLLDELTA_PAGE: {
+          delta.x = aEvent.mDeltaX * pageScrollSize.width;
+          delta.y = aEvent.mDeltaY * pageScrollSize.height;
+          break;
+        }
+        case ScrollWheelInput::SCROLLDELTA_PIXEL: {
+          delta = ToParentLayerCoordinates(ScreenPoint(aEvent.mDeltaX, aEvent.mDeltaY), aEvent.mOrigin);
+          break;
+        }
+        default:
+          MOZ_ASSERT_UNREACHABLE("unexpected scroll delta type");
+      }
+      break;
   }
 
   // Apply user-set multipliers.
@@ -1673,6 +1720,24 @@ ScrollInputMethodForWheelDeltaType(ScrollWheelInput::ScrollDeltaType aDeltaType)
 nsEventStatus AsyncPanZoomController::OnScrollWheel(const ScrollWheelInput& aEvent)
 {
   ParentLayerPoint delta = GetScrollWheelDelta(aEvent);
+
+  switch (aEvent.mScrollStatus) {
+    case ScrollWheelInput::SCROLLSTATUS_H_CONTINUE:
+      mDragFlagH = true;
+      break;
+    case ScrollWheelInput::SCROLLSTATUS_V_CONTINUE:
+      mDragFlagV = true;
+      break;
+    case ScrollWheelInput::SCROLLSTATUS_H_END:
+      mDragFlagH = false;
+      break;
+    case ScrollWheelInput::SCROLLSTATUS_V_END:
+      mDragFlagV = false;
+      break;
+    default:
+      break;
+  }
+
   APZC_LOG("%p got a scroll-wheel with delta %s\n", this, Stringify(delta).c_str());
 
   if ((delta.x || delta.y) && !CanScrollWithWheel(delta)) {
